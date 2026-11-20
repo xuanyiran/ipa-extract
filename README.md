@@ -1,93 +1,8 @@
 # pgyer-ipa-extract
 
-**English** | [简体中文](#简体中文)
+**简体中文** | [English](#english)
 
-Extract iOS IPA packages from [pgyer.com](https://www.pgyer.com) short links — no login, no iOS device, no API key required.
-
----
-
-## English
-
-### What it does
-
-Given a pgyer short link (e.g. `https://www.pgyer.com/AbCd`), the script:
-
-1. Solves the Alibaba Cloud `acw_sc__v2` JavaScript challenge
-2. Parses `aKey` / `installToken` from the app page
-3. Follows the `/app/install/<aKey>` → `itms-services://` redirect
-4. Fetches the OTA manifest (plist) using the client UA that the endpoint whitelists
-5. Downloads the signed `oss.pgyer.com` URL and verifies the package
-
-Works purely over HTTP. Only the public distribution flow is used.
-
-### Requirements
-
-- Python 3.8+
-- [`requests`](https://pypi.org/project/requests/) — `pip install requests`
-
-### Install
-
-```bash
-git clone https://github.com/xuanyiran/pgyer-ipa-extract.git
-cd pgyer-ipa-extract
-pip install requests
-```
-
-As a **ZCode skill**: copy the folder to `~/.zcode/skills/pgyer-ipa-extract/` (Windows: `%USERPROFILE%\.zcode\skills\pgyer-ipa-extract\`). It can then be triggered by description or invoked as `/pgyer-ipa-extract`.
-
-### Usage
-
-```bash
-# Resolve the download URL only (fast, no download)
-python scripts/pgyer_ipa.py "https://www.pgyer.com/AbCd" --no-download
-
-# Full download + integrity verification
-python scripts/pgyer_ipa.py "https://www.pgyer.com/AbCd" -o ./dl
-
-# Bare short code and 32-hex app key are also accepted
-python scripts/pgyer_ipa.py AbCd -o ./dl
-```
-
-| Flag | Description |
-|---|---|
-| `-o, --outdir` | Output directory (default: `./pgyer_downloads`) |
-| `--no-download` | Resolve the direct URL only |
-| `--acw-key` | Override the `acw_sc__v2` XOR key (default: standard value) |
-
-The output file is named from the `Content-Disposition` header (e.g. `AppName_1.2.3.ipa`), and the script prints the bundle identifier, version and minimum iOS from the embedded `Info.plist`.
-
-### How it works
-
-| Step | Detail |
-|---|---|
-| 1. Challenge | The short link returns a gzip'd `acw_sc__v2` challenge page. `arg1` is permuted with a fixed table and XORed with a fixed key, producing the cookie value. |
-| 2. Page parse | Inline JS variables expose `aType`, `aKey`, `installToken`, `timeSign`, `lang`. |
-| 3. Install URL | `GET /app/install/<aKey>?time=...&lang=cn&installToken=...` → `302 itms-services://...url=<plist>` |
-| 4. Plist URL | Usually `/app/plist/<aKey>/install//s.plist?` — the empty path segment is normal. |
-| 5. Plist fetch | **Must** use `User-Agent: com.apple.appstored/1.0`; browser UAs get 404. |
-| 6. Direct URL | `assets[kind=software-package].url` is the signed `oss.pgyer.com` link. |
-| 7. Verify | `zipfile` integrity check + `Payload/*.app/Info.plist`. |
-
-### Troubleshooting
-
-- **Page is ~2.7 KB of obfuscated JS** — the challenge page is gzip-compressed; add `--compressed` to curl (requests handles it automatically).
-- **`InvalidSchema: ... itms-services://`** — do not follow the redirect; read `Location` with `allow_redirects=False`.
-- **plist returns 404 for every path** — it is UA-gated; use `com.apple.appstored/1.0`.
-- **Direct URL returns 403** — the `auth_key` signature expires within hours; re-run the install step to mint a fresh URL.
-- **Windows console `UnicodeEncodeError`** — the script forces UTF-8 output internally.
-
-### Scope
-
-- iOS only (`aType=ios`). Android packages use a different flow.
-- Different short links may point to white-label builds of the same bundle; always trust the package's own `Info.plist` over the page title.
-
-### Disclaimer
-
-This tool is intended for downloading publicly distributed builds or packages you are authorized to test. Respect the platform's terms of service and applicable law.
-
-### License
-
-[MIT](LICENSE)
+从 [pgyer.com](https://www.pgyer.com)（蒲公英）短链提取 iOS IPA 安装包 —— 不需要登录、不需要 iOS 设备、不需要 API key。
 
 ---
 
@@ -103,7 +18,7 @@ This tool is intended for downloading publicly distributed builds or packages yo
 4. 用接口白名单要求的 UA 拉取 OTA 清单（plist）
 5. 从 `oss.pgyer.com` 签名直链下载并校验安装包
 
-全程纯 HTTP，走的是公开分发流程，不需要登录、不需要 iOS 设备、不需要 pgyer API key。
+全程纯 HTTP，走的是公开分发流程。
 
 ### 环境要求
 
@@ -171,5 +86,90 @@ python scripts/pgyer_ipa.py AbCd -o ./dl
 本工具仅用于下载公开发行的安装包，或你已获授权测试的包。请遵守平台服务条款和当地法律法规。
 
 ### 许可证
+
+[MIT](LICENSE)
+
+---
+
+## English
+
+### What it does
+
+Given a pgyer short link (e.g. `https://www.pgyer.com/AbCd`), the script:
+
+1. Solves the Alibaba Cloud `acw_sc__v2` JavaScript challenge
+2. Parses `aKey` / `installToken` from the app page
+3. Follows the `/app/install/<aKey>` → `itms-services://` redirect
+4. Fetches the OTA manifest (plist) using the client UA that the endpoint whitelists
+5. Downloads the signed `oss.pgyer.com` URL and verifies the package
+
+Works purely over HTTP, using only the public distribution flow.
+
+### Requirements
+
+- Python 3.8+
+- [`requests`](https://pypi.org/project/requests/) — `pip install requests`
+
+### Install
+
+```bash
+git clone https://github.com/xuanyiran/pgyer-ipa-extract.git
+cd pgyer-ipa-extract
+pip install requests
+```
+
+As a **ZCode skill**: copy the folder to `~/.zcode/skills/pgyer-ipa-extract/` (Windows: `%USERPROFILE%\.zcode\skills\pgyer-ipa-extract\`). It can then be triggered by description or invoked as `/pgyer-ipa-extract`.
+
+### Usage
+
+```bash
+# Resolve the download URL only (fast, no download)
+python scripts/pgyer_ipa.py "https://www.pgyer.com/AbCd" --no-download
+
+# Full download + integrity verification
+python scripts/pgyer_ipa.py "https://www.pgyer.com/AbCd" -o ./dl
+
+# Bare short code and 32-hex app key are also accepted
+python scripts/pgyer_ipa.py AbCd -o ./dl
+```
+
+| Flag | Description |
+|---|---|
+| `-o, --outdir` | Output directory (default: `./pgyer_downloads`) |
+| `--no-download` | Resolve the direct URL only |
+| `--acw-key` | Override the `acw_sc__v2` XOR key (default: standard value) |
+
+The output file is named from the `Content-Disposition` header (e.g. `AppName_1.2.3.ipa`), and the script prints the bundle identifier, version and minimum iOS from the embedded `Info.plist`.
+
+### How it works
+
+| Step | Detail |
+|---|---|
+| 1. Challenge | The short link returns a gzip'd `acw_sc__v2` challenge page. `arg1` is permuted with a fixed table and XORed with a fixed key, producing the cookie value. |
+| 2. Page parse | Inline JS variables expose `aType`, `aKey`, `installToken`, `timeSign`, `lang`. |
+| 3. Install URL | `GET /app/install/<aKey>?time=...&lang=cn&installToken=...` → `302 itms-services://...url=<plist>` |
+| 4. Plist URL | Usually `/app/plist/<aKey>/install//s.plist?` — the empty path segment is normal. |
+| 5. Plist fetch | **Must** use `User-Agent: com.apple.appstored/1.0`; browser UAs get 404. |
+| 6. Direct URL | `assets[kind=software-package].url` is the signed `oss.pgyer.com` link. |
+| 7. Verify | `zipfile` integrity check + `Payload/*.app/Info.plist`. |
+
+### Troubleshooting
+
+- **Page is ~2.7 KB of obfuscated JS** — the challenge page is gzip-compressed; add `--compressed` to curl (requests handles it automatically).
+- **`InvalidSchema: ... itms-services://`** — do not follow the redirect; read `Location` with `allow_redirects=False`.
+- **plist returns 404 for every path** — it is UA-gated; use `com.apple.appstored/1.0`.
+- **Direct URL returns 403** — the `auth_key` signature expires within hours; re-run the install step to mint a fresh URL.
+- **Windows console `UnicodeEncodeError`** — the script forces UTF-8 output internally.
+
+### Scope
+
+- iOS only (`aType=ios`). Android packages use a different flow.
+- Different short links may point to white-label builds of the same bundle; always trust the package's own `Info.plist` over the page title.
+
+### Disclaimer
+
+This tool is intended for downloading publicly distributed builds or packages you are authorized to test. Respect the platform's terms of service and applicable law.
+
+### License
 
 [MIT](LICENSE)
