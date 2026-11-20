@@ -1,12 +1,24 @@
-# pgyer-ipa-extract
+# ipa-extract
 
 **简体中文** | [English](#english)
 
-从 [pgyer.com](https://www.pgyer.com)（蒲公英）短链提取 iOS IPA 安装包 —— 不需要登录、不需要 iOS 设备、不需要 API key。
+从分发平台短链提取 iOS IPA 安装包 —— 不需要登录、不需要 iOS 设备、不需要 API key。
+
+> **实测范围：仅蒲公英（pgyer.com）。**
+> 本工具目前只实现并验证了蒲公英的分发链路；其他分发平台（fir.im、TestFlight、企业自建 OTA 等）**尚未实现、未验证**，请勿假设可通用。接入其他平台需要分别实现各自的挑战、签名和下载接口。
 
 ---
 
 ## 简体中文
+
+### 平台支持
+
+| 平台 | 状态 |
+|---|---|
+| 蒲公英 pgyer.com | ✅ 已实测（当前唯一支持） |
+| fir.im | ❌ 未实现、未验证 |
+| TestFlight | ❌ 未实现、未验证 |
+| 企业自建 OTA | ❌ 未实现、未验证 |
 
 ### 功能简介
 
@@ -28,24 +40,24 @@
 ### 安装
 
 ```bash
-git clone https://github.com/xuanyiran/pgyer-ipa-extract.git
-cd pgyer-ipa-extract
+git clone https://github.com/xuanyiran/ipa-extract.git
+cd ipa-extract
 pip install requests
 ```
 
-作为 **ZCode 技能**：把整个目录拷到 `~/.zcode/skills/pgyer-ipa-extract/`（Windows：`%USERPROFILE%\.zcode\skills\pgyer-ipa-extract\`），之后可被描述自动触发，或直接用 `/pgyer-ipa-extract` 调用。
+作为 **ZCode 技能**：把整个目录拷到 `~/.zcode/skills/ipa-extract/`（Windows：`%USERPROFILE%\.zcode\skills\ipa-extract\`），之后可被描述自动触发，或直接用 `/ipa-extract` 调用。
 
 ### 用法
 
 ```bash
 # 只解析直链，不下载（秒出，适合先验证链路）
-python scripts/pgyer_ipa.py "https://www.pgyer.com/AbCd" --no-download
+python scripts/ipa_extract.py "https://www.pgyer.com/AbCd" --no-download
 
 # 完整下载 + 完整性校验
-python scripts/pgyer_ipa.py "https://www.pgyer.com/AbCd" -o ./dl
+python scripts/ipa_extract.py "https://www.pgyer.com/AbCd" -o ./dl
 
 # 也接受裸短码和 32 位 appKey
-python scripts/pgyer_ipa.py AbCd -o ./dl
+python scripts/ipa_extract.py AbCd -o ./dl
 ```
 
 | 参数 | 说明 |
@@ -56,7 +68,7 @@ python scripts/pgyer_ipa.py AbCd -o ./dl
 
 输出文件名取自 OSS 的 `Content-Disposition`（如 `应用名_1.2.3.ipa`），脚本还会打印包内 `Info.plist` 的 bundle id、版本号和最低 iOS 版本。
 
-### 原理
+### 原理（蒲公英链路）
 
 | 步骤 | 说明 |
 |---|---|
@@ -78,8 +90,9 @@ python scripts/pgyer_ipa.py AbCd -o ./dl
 
 ### 适用范围
 
-- 仅覆盖 iOS（`aType=ios`）。Android 包的下发流程不同，不在本工具范围。
-- 不同短链可能指向同一 bundle id 的白标皮肤；以包内 `Info.plist` 为准，不要只看页面标题。
+- **平台**：仅蒲公英（pgyer.com）已实测；其他分发平台未实现、未验证。
+- **系统**：仅 iOS（`aType=ios`）。Android 包的下发流程不同，不在本工具范围。
+- **白标包**：不同短链可能指向同一 bundle id 的白标皮肤；以包内 `Info.plist` 为准，不要只看页面标题。
 
 ### 免责声明
 
@@ -92,6 +105,15 @@ python scripts/pgyer_ipa.py AbCd -o ./dl
 ---
 
 ## English
+
+### Supported platforms
+
+| Platform | Status |
+|---|---|
+| pgyer.com | ✅ Tested (currently the only supported one) |
+| fir.im | ❌ Not implemented / not verified |
+| TestFlight | ❌ Not implemented / not verified |
+| Self-hosted OTA | ❌ Not implemented / not verified |
 
 ### What it does
 
@@ -113,24 +135,24 @@ Works purely over HTTP, using only the public distribution flow.
 ### Install
 
 ```bash
-git clone https://github.com/xuanyiran/pgyer-ipa-extract.git
-cd pgyer-ipa-extract
+git clone https://github.com/xuanyiran/ipa-extract.git
+cd ipa-extract
 pip install requests
 ```
 
-As a **ZCode skill**: copy the folder to `~/.zcode/skills/pgyer-ipa-extract/` (Windows: `%USERPROFILE%\.zcode\skills\pgyer-ipa-extract\`). It can then be triggered by description or invoked as `/pgyer-ipa-extract`.
+As a **ZCode skill**: copy the folder to `~/.zcode/skills/ipa-extract/` (Windows: `%USERPROFILE%\.zcode\skills\ipa-extract\`). It can then be triggered by description or invoked as `/ipa-extract`.
 
 ### Usage
 
 ```bash
 # Resolve the download URL only (fast, no download)
-python scripts/pgyer_ipa.py "https://www.pgyer.com/AbCd" --no-download
+python scripts/ipa_extract.py "https://www.pgyer.com/AbCd" --no-download
 
 # Full download + integrity verification
-python scripts/pgyer_ipa.py "https://www.pgyer.com/AbCd" -o ./dl
+python scripts/ipa_extract.py "https://www.pgyer.com/AbCd" -o ./dl
 
 # Bare short code and 32-hex app key are also accepted
-python scripts/pgyer_ipa.py AbCd -o ./dl
+python scripts/ipa_extract.py AbCd -o ./dl
 ```
 
 | Flag | Description |
@@ -141,7 +163,7 @@ python scripts/pgyer_ipa.py AbCd -o ./dl
 
 The output file is named from the `Content-Disposition` header (e.g. `AppName_1.2.3.ipa`), and the script prints the bundle identifier, version and minimum iOS from the embedded `Info.plist`.
 
-### How it works
+### How it works (pgyer flow)
 
 | Step | Detail |
 |---|---|
@@ -163,8 +185,9 @@ The output file is named from the `Content-Disposition` header (e.g. `AppName_1.
 
 ### Scope
 
-- iOS only (`aType=ios`). Android packages use a different flow.
-- Different short links may point to white-label builds of the same bundle; always trust the package's own `Info.plist` over the page title.
+- **Platforms**: only pgyer.com is implemented and tested; other platforms are not implemented or verified.
+- **OS**: iOS only (`aType=ios`). Android packages use a different flow.
+- **White-label builds**: different short links may point to different skins of the same bundle; always trust the package's own `Info.plist` over the page title.
 
 ### Disclaimer
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""pgyer-ipa-extract: 从蒲公英(pgyer.com)短链提取 iOS IPA。
+"""ipa-extract: 从分发平台短链提取 iOS IPA（当前仅实现蒲公英 pgyer.com）。
 
 用法:
-    python pgyer_ipa.py https://www.pgyer.com/AbCd -o ./dl
-    python pgyer_ipa.py AbCd --no-download          # 只解析直链
+    python ipa_extract.py https://www.pgyer.com/AbCd -o ./dl
+    python ipa_extract.py AbCd --no-download        # 只解析直链
 
 依赖: requests (pip install requests)
 """

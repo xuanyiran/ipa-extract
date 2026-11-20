@@ -1,11 +1,14 @@
 ---
-name: pgyer-ipa-extract
-description: 蒲公英 pgyer.com 免登录提取 iOS IPA 安装包。给定蒲公英短链（形如 https://www.pgyer.com/AbCd）或短码，自动过阿里云盾 acw_sc__v2 挑战、解析 aKey/installToken、走 /app/install 的 itms-services 跳转、用 com.apple.appstored UA 拉 OTA plist、再从 oss.pgyer.com 签名直链下载 IPA。当用户要求「提取/下载蒲公英上的 IPA」「pgyer 下包」，或调试中遇到 acw_sc__v2 挑战页、itms-services 302、/app/plist/.../s.plist 一律 404 时使用。
+name: ipa-extract
+description: iOS IPA 安装包提取（当前仅实测蒲公英 pgyer.com 分发链路）。给定蒲公英短链（形如 https://www.pgyer.com/AbCd）或短码，自动过阿里云盾 acw_sc__v2 挑战、解析 aKey/installToken、走 /app/install 的 itms-services 跳转、用 com.apple.appstored UA 拉 OTA plist、再从 oss.pgyer.com 签名直链下载 IPA。当用户要求「提取/下载 IPA 包」「解析分发平台安装包」，或调试中遇到 acw_sc__v2 挑战页、itms-services 302、/app/plist/.../s.plist 一律 404 时使用。
 ---
 
-# pgyer-ipa-extract — 蒲公英 iOS IPA 提取
+# ipa-extract — iOS IPA 包提取
 
-直接从蒲公英（pgyer.com）短链提取 iOS 安装包（IPA）：全程纯 HTTP，**不需要 iOS 设备、不需要登录、不需要 pgyer 开放平台 API key**。
+从分发平台短链提取 iOS 安装包（IPA）：全程纯 HTTP，**不需要 iOS 设备、不需要登录、不需要平台 API key**。
+
+> **实测范围：仅蒲公英（pgyer.com）**
+> 本工具目前只实现并验证了蒲公英的分发链路。其他平台（fir.im、TestFlight、企业自建 OTA 等）**尚未实现、未验证**，请勿假设可通用；接入其他平台需要分别实现各自的挑战、签名和下载接口。
 
 > 仅用于公开分发或已授权的包下载与测试。
 
@@ -17,17 +20,17 @@ description: 蒲公英 pgyer.com 免登录提取 iOS IPA 安装包。给定蒲�
 
 ```bash
 # 只解析不下包（快速验证链路，几秒）
-python scripts/pgyer_ipa.py "https://www.pgyer.com/AbCd" --no-download -o ./dl
+python scripts/ipa_extract.py "https://www.pgyer.com/AbCd" --no-download -o ./dl
 
 # 完整下载 + 校验
-python scripts/pgyer_ipa.py "https://www.pgyer.com/AbCd" -o ./dl
+python scripts/ipa_extract.py "https://www.pgyer.com/AbCd" -o ./dl
 ```
 
 - `target` 支持：完整短链 URL、裸短码（如 `AbCd`）、32 位 appKey
 - 输出：`<outdir>/<应用名>_<版本>.ipa`（文件名取自 OSS 的 Content-Disposition），并打印 bundle id / 版本 / zip 完整性校验结果
 - `--acw-key` 可覆盖 acw_sc__v2 的异或 key（见下）
 
-## 流程（脚本内部步骤）
+## 流程（蒲公英链路）
 
 1. GET 短链 → 命中阿里云盾 `acw_sc__v2` 挑战页：JS 里 `arg1='...'`，用固定置换表 unsbox 后与固定 key 异或 → 设 cookie 重放
 2. 解析页面内联变量：`aType='ios'`、`aKey`（=buildKey）、`installToken`、`timeSign`、`lang`
@@ -92,6 +95,7 @@ unzip -l app.ipa | head     # 应见 Payload/<Name>.app/...
 
 ## 范围与注意
 
-- 仅覆盖 **iOS（aType=ios）**。Android 包（aType=android）的下发路径不同，不在本技能范围。
+- **平台**：仅蒲公英（pgyer.com）已实测；其他分发平台未实现、未验证。
+- **系统**：仅 iOS（aType=ios）。Android 包的下发路径不同，不在本工具范围。
 - **白标包**：不同短链可能指向同一 bundle id 的不同皮肤（显示名不同、可执行文件相同），以包内 Info.plist 为准，不要只看页面标题。
 - plist 的 metadata 由发布方填写，bundle-identifier 可能与实际包不一致，最终以包内 Info.plist 为准。
